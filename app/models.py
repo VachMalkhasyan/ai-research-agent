@@ -1,6 +1,8 @@
-from sqlalchemy import Column, String, Text, DateTime
+from sqlalchemy import Column, DateTime, String, Text
 from sqlalchemy.sql import func
+
 from app.database import Base
+
 
 class ResearchTask(Base):
     __tablename__ = "research_tasks"

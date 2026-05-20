@@ -1,17 +1,19 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langgraph.graph import StateGraph, END
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models import ResearchTask
-from typing import TypedDict
-from dotenv import load_dotenv
 import os
+from typing import TypedDict
+
+from dotenv import load_dotenv
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langgraph.graph import END, StateGraph
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models import ResearchTask
 
 load_dotenv()
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
-    google_api_key=os.getenv("GEMINI_API_KEY")
+    model="gemini-2.5-flash", google_api_key=os.getenv("GEMINI_API_KEY")
 )
+
 
 class ResearchState(TypedDict):
     task_id: str
@@ -21,16 +23,22 @@ class ResearchState(TypedDict):
 
 
 async def researcher_node(state: ResearchState) -> ResearchState:
-    response = await llm.ainvoke(
-        f"Research the following topic thoroughly and list key findings:\n{state['prompt']}"
+    prompt = (
+        f"Research the following topic thoroughly "
+        f"and list key findings:\n{state['prompt']}"
     )
+    response = await llm.ainvoke(prompt)
     return {**state, "research": response.content}
 
+
 async def writer_node(state: ResearchState) -> ResearchState:
-    response = await llm.ainvoke(
-        f"Based on this research:\n{state['research']}\n\nWrite a clean, structured report."
+    prompt = (
+        f"Based on this research:\n{state['research']}"
+        f"\n\nWrite a clean, structured report."
     )
+    response = await llm.ainvoke(prompt)
     return {**state, "report": response.content}
+
 
 def build_graph():
     graph = StateGraph(ResearchState)
@@ -44,6 +52,7 @@ def build_graph():
 
     return graph.compile()
 
+
 async def run_agent(task_id: str, prompt: str, db: AsyncSession):
     from sqlalchemy import select
 
@@ -53,12 +62,9 @@ async def run_agent(task_id: str, prompt: str, db: AsyncSession):
     await db.commit()
 
     graph = build_graph()
-    final_state = await graph.ainvoke({
-        "task_id": task_id,
-        "prompt": prompt,
-        "research": "",
-        "report": ""
-    })
+    final_state = await graph.ainvoke(
+        {"task_id": task_id, "prompt": prompt, "research": "", "report": ""}
+    )
 
     task.result = final_state["report"]
     task.status = "done"
