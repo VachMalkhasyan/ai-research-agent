@@ -99,24 +99,13 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GEMINI_API_KEY,DATABASE_URL,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB
+          envs: GEMINI_API_KEY,DATABASE_URL,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,LANGCHAIN_TRACING_V2,LANGCHAIN_ENDPOINT,LANGCHAIN_API_KEY,LANGCHAIN_PROJECT,TAVILY_API_KEY
           script: |
             cd ~/ai-research-agent
             git pull origin main
-
-            # Recreate .env from GitHub secrets every deploy
-            cat > .env << EOF
-            GEMINI_API_KEY=$GEMINI_API_KEY
-            DATABASE_URL=$DATABASE_URL
-            POSTGRES_USER=$POSTGRES_USER
-            POSTGRES_PASSWORD=$POSTGRES_PASSWORD
-            POSTGRES_DB=$POSTGRES_DB
-            LANGCHAIN_TRACING_V2=$LANGCHAIN_TRACING_V2
-            LANGCHAIN_ENDPOINT=$LANGCHAIN_ENDPOINT
-            LANGCHAIN_API_KEY=$LANGCHAIN_API_KEY
-            LANGCHAIN_PROJECT=$LANGCHAIN_PROJECT
-            EOF
-
+            printf "GEMINI_API_KEY=%s\nDATABASE_URL=%s\nPOSTGRES_USER=%s\nPOSTGRES_PASSWORD=%s\nPOSTGRES_DB=%s\nLANGCHAIN_TRACING_V2=%s\nLANGCHAIN_ENDPOINT=%s\nLANGCHAIN_API_KEY=%s\nLANGCHAIN_PROJECT=%s\nTAVILY_API_KEY=%s\n" \
+              "$GEMINI_API_KEY" "$DATABASE_URL" "$POSTGRES_USER" "$POSTGRES_PASSWORD" "$POSTGRES_DB" \
+              "$LANGCHAIN_TRACING_V2" "$LANGCHAIN_ENDPOINT" "$LANGCHAIN_API_KEY" "$LANGCHAIN_PROJECT" "$TAVILY_API_KEY" > .env
             docker-compose down
             docker-compose up -d --build
             docker-compose ps

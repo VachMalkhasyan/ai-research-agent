@@ -3,7 +3,9 @@ uvicorn
 langgraph
 langchain
 langchain-google-genai
+langchain-community
 langsmith
+tavily-python
 asyncpg
 sqlalchemy
 python-dotenv
